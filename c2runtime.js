@@ -29855,7 +29855,7 @@ cr.getObjectRefTable = function () { return [
 	cr.behaviors.Fade.prototype.acts.StartFade,
 	cr.system_object.prototype.cnds.PickAll,
 	cr.plugins_.Particles.prototype.acts.SetTimeout,
-	cr.plugins_.GamePix_SDK.prototype.acts.interstitialAd,
+	cr.plugins_.Browser.prototype.acts.ExecJs,
 	cr.system_object.prototype.acts.GoToLayout,
 	cr.plugins_.LocalStorage.prototype.acts.CheckItemExists,
 	cr.plugins_.LocalStorage.prototype.cnds.OnItemMissing,
