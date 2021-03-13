@@ -19987,6 +19987,349 @@ cr.plugins_.Function = function(runtime)
 	};
 	pluginProto.exps = new Exps();
 }());
+/*
+.gpx-popup {
+  height: 30px;
+  width: 300px;
+  position: fixed;
+  left: 50%;
+  top: 5px;
+  color: black !important;
+  font-family: 'Courier New';
+  transform: translate(-50%, 0%);
+  pointer-events: none;
+  transition: all 300ms ease-in-out;
+  z-index: 99999999999999999999999999;
+  background-color: #fff;
+  text-align: center;
+  border: 1px solid;
+  box-shadow: 1px 1px 1px;
+  border-radius: 5px;
+  opacity: 0.7;
+}
+* */
+var GPX_EVENTS = {
+  "ERROR": "ERROR",
+  "WARNING": "WARNING",
+  "LOADING": "LOADING",
+  "UPDATE_SCORE": "UPDATE_SCORE",
+  "UPDATE_LEVEL": "UPDATE_LEVEL",
+  "REQUEST_INTERSTITIAL_AD": "REQUEST_INTERSTITIAL_AD",
+  "REQUEST_REWARD_AD": "REQUEST_REWARD_AD",
+  "REQUEST_PURCHASE": "REQUEST_PURCHASE",
+  "REQUEST_PLAYER_INFO": "REQUEST_PLAYER_INFO",
+  "LOADED": "LOADED",
+  "HAPPY_MOMENT": "HAPPY_MOMENT",
+  "SAD_MOMENT": "SAD_MOMENT",
+  "UPDATE_LOCALSTORAGE": "UPDATE_LOCALSTORAGE",
+  "LANG_USED": "LANG_USED",
+  "GAME_ACTION": "GAME_ACTION",
+  "GAME_STOP": "GAME_STOP",
+  "PLAYER_INFO_EXECUTED": "PLAYER_INFO_EXECUTED",
+  "PURCHASE_EXECUTED": "PURCHASE_EXECUTED",
+  "REWARD_AD_EXECUTED": "REWARD_AD_EXECUTED",
+  "INTERSTITIAL_AD_EXECUTED": "INTERSTITIAL_AD_EXECUTED",
+  "PAUSE": "PAUSE",
+  "RESUME": "RESUME",
+};
+if (typeof window !== 'undefined' && !window.GamePix) {
+  var getQueryStringParamsFromUrl = function(key) {
+    var valueToReturn = '';
+    if (window && window.location) {
+      var query = window.location.search.substring(1);
+      var vars = query.split('&');
+      for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) === key) {
+          return decodeURIComponent(pair[1]);
+        }
+      }
+    }
+    return valueToReturn;
+  };
+  (function() {
+    var rawCss = '.gpx-popup {\n' +
+      '  height: 30px;\n' +
+      '  width: 300px;\n' +
+      '  position: fixed;\n' +
+      '  left: 50%;\n' +
+      '  top: 5px;\n' +
+      '  color: black !important;\n' +
+      '  font-family: \'Courier New\';\n' +
+      '  transform: translate(-50%, 0%);\n' +
+      '  pointer-events: none;\n' +
+      '  transition: all 300ms ease-in-out;\n' +
+      '  z-index: 99999999999999999999999999;\n' +
+      '  background-color: #fff;\n' +
+      '  text-align: center;\n' +
+      '  border: 1px solid;\n' +
+      '  box-shadow: 1px 1px 1px;\n' +
+      '  border-radius: 5px;\n' +
+      '  opacity: 0.7;\n' +
+      '}';
+    var style = document.createElement('style');
+    style.appendChild(document.createTextNode(rawCss));
+    document.getElementsByTagName('head')[0].appendChild(style);
+  })();
+  function sendEventNotification (type, value) {
+    if (typeof document === 'undefined' || typeof document.body === 'undefined') return;
+    try {
+      var popup = document.createElement('div');
+      popup.setAttribute('class', 'gpx-popup');
+      var titleContainer = document.createElement('p');
+      titleContainer.textContent = type + (value ? ' - ' + value : '');
+      popup.appendChild(titleContainer);
+      document.body.appendChild(popup);
+      setTimeout(function() {
+        document.body.removeChild(popup);
+      }, 2000);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  function sendEventActionNotification (type, text, resolve) {
+    if (typeof window === "undefined" || typeof window.confirm === "undefined")
+      return;
+    try {
+      var confirm = window.confirm(text);
+      return resolve({success: confirm});
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  /*if (window.top !== window.parent) {
+    sendEventNotification = function(type, value) {
+      var objectToSend = {};
+      objectToSend.type = type;
+      objectToSend.url = window.location.href;
+      if (value) objectToSend.object = JSON.stringify({value: value});
+      try {
+        window.parent.postMessage(objectToSend, window.name);
+      } catch (e) {
+      }
+    }
+    sendEventActionNotification = function(type, text, resolve) {
+      var objectToSend = {};
+      objectToSend.type = type;
+      objectToSend.url = window.location.href;
+      if (value) objectToSend.object = JSON.stringify({value: value});
+      try {
+        window.parent.postMessage(objectToSend, window.name);
+      } catch (e) {
+      }
+    }
+  }*/
+  window.GamePix = {
+    internal_storage: {},
+    lang: function() {
+      return getQueryStringParamsFromUrl('lang') || 'en'
+    },
+    loading: function(percentage) {
+      console.log('GamePix SDK log: GamePix.loading', percentage);
+      sendEventNotification(GPX_EVENTS.LOADING, percentage);
+    },
+    loaded: function() {
+      return new Promise(function(resolve) {
+        console.log('GamePix SDK log: GamePix.loaded');
+        return sendEventActionNotification(GPX_EVENTS.LOADED, 'Game loaded', resolve);
+      });
+    },
+    gameAction: function() {
+      console.log('GamePix SDK log: GamePix.gameAction');
+      sendEventNotification(GPX_EVENTS.GAME_ACTION);
+    },
+    gameStop: function() {
+      console.log('GamePix SDK log: GamePix.gameStop');
+      sendEventNotification(GPX_EVENTS.GAME_STOP);
+    },
+    updateLevel: function(level) {
+      console.log('GamePix SDK log: GamePix.updateLevel', level);
+      sendEventNotification(GPX_EVENTS.UPDATE_LEVEL, level);
+    },
+    updateScore: function(score) {
+      console.log('GamePix SDK log: GamePix.updateScore', score);
+      sendEventNotification(GPX_EVENTS.UPDATE_SCORE, score);
+    },
+    happyMoment: function() {
+      console.log('GamePix SDK log: GamePix.happyMoment');
+      sendEventNotification(GPX_EVENTS.HAPPY_MOMENT);
+    },
+    sadMoment: function() {
+      console.log('GamePix SDK log: GamePix.sadMoment');
+      sendEventNotification(GPX_EVENTS.SAD_MOMENT);
+    },
+    interstitialAd: function() {
+      return new Promise(function(resolve) {
+        console.log('GamePix SDK log: GamePix.Interstitial Ad');
+        return sendEventActionNotification(GPX_EVENTS.REQUEST_INTERSTITIAL_AD, 'Here will be an interstitial ad', resolve);
+      });
+    },
+    rewardAd: function() {
+      return new Promise(function(resolve) {
+        console.log('GamePix SDK log: GamePix.rewardAd');
+        return sendEventActionNotification(GPX_EVENTS.REQUEST_REWARD_AD, 'Do you want to assign the reward?', resolve);
+      });
+    },
+    purchase: function(itemName, itemQuantity, price) {
+      return new Promise(function(resolve) {
+        console.log('GamePix SDK log: GamePix.purchase', itemName, itemQuantity, price);
+        return sendEventActionNotification(GPX_EVENTS.REQUEST_PURCHASE, 'Purchase:' + itemName + 'x' + itemQuantity + ' for price: ' + price, resolve);
+      });
+    },
+    localStorage: {
+      setItem: function(key, value) {
+        try {
+          window.GamePix.internal_storage[key] = value;
+          window.localStorage.setItem(key, value);
+          sendEventNotification(GPX_EVENTS.UPDATE_LOCALSTORAGE, 'Updated key:' + key);
+        } catch (e) {
+        }
+      },
+      getItem: function(key) {
+        try {
+          return window.GamePix.internal_storage[key] || window.localStorage.getItem(key);
+        } catch (e) {
+          return window.GamePix.internal_storage[key];
+        }
+      },
+      removeItem: function(key) {
+        try {
+          delete window.GamePix.internal_storage[key];
+          window.localStorage.removeItem(key);
+        } catch (e) {
+        }
+      }
+    },
+    pause: function() {
+      cr_setSuspended(true);
+    },
+    resume: function() {
+      cr_setSuspended(false);
+    },
+  };
+}
+if (typeof window !== 'undefined' && window.GamePix !== undefined) {
+  window.GamePix.pause = function() {
+    cr_setSuspended(true);
+  };
+  window.GamePix.resume = function() {
+    cr_setSuspended(false);
+  }
+}
+;
+;
+cr.plugins_.GamePix_SDK = function(runtime) {
+  this.runtime = runtime;
+};
+(function() {
+  var pluginProto = cr.plugins_.GamePix_SDK.prototype;
+  pluginProto.Type = function(plugin) {
+    this.plugin = plugin;
+    this.runtime = plugin.runtime;
+  };
+  var typeProto = pluginProto.Type.prototype;
+  typeProto.onCreate = function() {};
+  pluginProto.Instance = function(type) {
+    this.type = type;
+    this.runtime = type.runtime;
+    var that = this;
+    var _tempProgress = 0;
+    window.GamePix.loading(_tempProgress);
+    var intervalForSendProgress = setInterval(function() {
+      if (typeof that.runtime.progress === "number") {
+        var currentProgress = parseInt(that.runtime.progress * 100);
+        if (currentProgress > _tempProgress) {
+          _tempProgress = currentProgress;
+          window.GamePix.loading(_tempProgress);
+        }
+        if (currentProgress >= 99) clearInterval(intervalForSendProgress);
+      }
+    }, 500)
+  };
+  var instanceProto = pluginProto.Instance.prototype;
+  instanceProto.onCreate = function() {
+  };
+  instanceProto.onDestroy = function() {};
+  instanceProto.saveToJSON = function() {
+    return {
+    };
+  };
+  instanceProto.loadFromJSON = function(o) {
+  };
+  instanceProto.draw = function(ctx) {};
+  instanceProto.drawGL = function(glw) {};
+  function Cnds () {};
+  function Acts () {};
+  Acts.prototype.loaded = function() {
+    window.GamePix.loaded().then(function(res) {
+      c2_callFunction('loadedExecuted');
+    })
+  };
+  Acts.prototype.gameAction = function() {
+    return window.GamePix.gameAction();
+  }
+  Acts.prototype.gameStop = function() {
+    return window.GamePix.gameStop();
+  }
+  Acts.prototype.updateLevel = function(level) {
+    return window.GamePix.updateLevel(level);
+  }
+  Acts.prototype.updateScore = function(score) {
+    return window.GamePix.updateScore(score);
+  }
+  Acts.prototype.happyMoment = function() {
+    return window.GamePix.happyMoment();
+  }
+  Acts.prototype.sadMoment = function() {
+    return window.GamePix.sadMoment();
+  }
+  Acts.prototype.interstitialAd = function() {
+    window.GamePix.interstitialAd().then(function() {
+      return c2_callFunction('interstitialAdExecuted');
+    })
+  }
+  Acts.prototype.rewardAd = function() {
+    window.GamePix.rewardAd().then(function(response) {
+      if (response.success) {
+        c2_callFunction('assignReward');
+      } else {
+        c2_callFunction('denyReward');
+      }
+    })
+  }
+  Acts.prototype.purchase = function(itemName, itemQuantity, price) {
+    window.GamePix.purchase(itemName, itemQuantity, price).then(function(response) {
+      if (response.success) {
+        c2_callFunction('assignItem');
+      } else {
+        c2_callFunction('denyItem');
+      }
+    })
+  }
+  Acts.prototype.getItem = function(key) {
+    window.GamePix.localStorage.getItem(key);
+  }
+  Acts.prototype.setItem = function(key, value) {
+    window.GamePix.localStorage.setItem(key, value);
+  }
+  Acts.prototype.removeItem = function(key) {
+    window.GamePix.localStorage.removeItem(key);
+  }
+  pluginProto.acts = new Acts();
+  function Exps () {};
+  Exps.prototype.lang = function(ret) {
+    ret.set_string(window.GamePix.lang());
+  }
+  Exps.prototype.getItem = function(ret, item) {
+    var itemToCheck = window.GamePix.localStorage.getItem(item);
+    if (itemToCheck !== "string") return ret.set_string("null");
+    ret.set_string(window.GamePix.localStorage.getItem(item));
+  }
+  /*Exps.prototype.itemExists = function(ret, item) {
+    ret.(window.GamePix.localStorage.getItem(item));
+  }*/
+  pluginProto.exps = new Exps();
+}());
 ;
 ;
 cr.plugins_.JSON = function(runtime)
@@ -29445,13 +29788,14 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.Browser,
 	cr.plugins_.JSON,
 	cr.plugins_.Function,
-	cr.plugins_.Text,
-	cr.plugins_.Sprite,
-	cr.plugins_.Mouse,
 	cr.plugins_.LocalStorage,
+	cr.plugins_.Mouse,
 	cr.plugins_.Spritefont2,
+	cr.plugins_.Text,
 	cr.plugins_.Touch,
 	cr.plugins_.Particles,
+	cr.plugins_.Sprite,
+	cr.plugins_.GamePix_SDK,
 	cr.plugins_.WebStorage,
 	cr.behaviors.Physics,
 	cr.behaviors.lunarray_LiteTween,
@@ -29466,6 +29810,7 @@ cr.getObjectRefTable = function () { return [
 	cr.behaviors.Pin.prototype.acts.Pin,
 	cr.plugins_.Sprite.prototype.acts.SetAnimFrame,
 	cr.plugins_.Function.prototype.acts.CallFunction,
+	cr.plugins_.GamePix_SDK.prototype.acts.loaded,
 	cr.system_object.prototype.cnds.IsGroupActive,
 	cr.plugins_.Touch.prototype.cnds.OnTapGestureObject,
 	cr.plugins_.Text.prototype.acts.SetText,
@@ -29510,6 +29855,7 @@ cr.getObjectRefTable = function () { return [
 	cr.behaviors.Fade.prototype.acts.StartFade,
 	cr.system_object.prototype.cnds.PickAll,
 	cr.plugins_.Particles.prototype.acts.SetTimeout,
+	cr.plugins_.GamePix_SDK.prototype.acts.interstitialAd,
 	cr.system_object.prototype.acts.GoToLayout,
 	cr.plugins_.LocalStorage.prototype.acts.CheckItemExists,
 	cr.plugins_.LocalStorage.prototype.cnds.OnItemMissing,
@@ -29534,4 +29880,3 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.Audio.prototype.acts.SetMuted,
 	cr.plugins_.Audio.prototype.acts.SetPaused
 ];};
-
